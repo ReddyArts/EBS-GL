@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GL Intelligence Hub — Oracle EBS R12.2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f5f7; --surface:#ffffff; --surface2:#f8f9fb;
+  --border:#e2e5ea; --border2:#eceef2;
+  --text:#111827; --muted:#6b7280; --muted2:#9ca3af;
+  --accent:#2563eb; --accent2:#1d4ed8; --accent-bg:#eff6ff;
+  --green:#16a34a; --green-bg:#f0fdf4; --green-bd:#bbf7d0;
+  --red:#dc2626; --red-bg:#fef2f2; --red-bd:#fecaca;
+  --amber:#d97706; --amber-bg:#fffbeb; --amber-bd:#fde68a;
+  --purple:#7c3aed; --purple-bg:#f5f3ff; --purple-bd:#ddd6fe;
+  --teal:#0d9488; --teal-bg:#f0fdfa; --teal-bd:#99f6e4;
+  --mono:'DM Mono',monospace; --sans:'DM Sans',sans-serif;
+  --r:8px; --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* PAGE LOADER */
+#page-loader{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:9999;transition:opacity .4s}
+.loader-logo{font-family:var(--mono);font-size:13px;color:var(--accent);border:1.5px solid var(--accent);padding:7px 18px;border-radius:6px;letter-spacing:.05em}
+.loader-bar{width:180px;height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.loader-fill{height:100%;background:var(--accent);border-radius:2px;animation:load-slide 1.4s ease-in-out infinite}
+@keyframes load-slide{0%{transform:translateX(-100%)}100%{transform:translateX(280%)}}
+.loader-text{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:52px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 0 var(--border)}
+.topbar-left{display:flex;align-items:center;gap:18px}
+.logo{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent);border:1.5px solid var(--accent);padding:3px 11px;border-radius:5px;letter-spacing:.05em}
+.breadcrumb{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.breadcrumb span{color:var(--text);font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-badge{font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:var(--surface2)}
+.topbar-badge.open{border-color:var(--green-bd);color:var(--green);background:var(--green-bg)}
+.topbar-badge.frozen{border-color:var(--amber-bd);color:var(--amber);background:var(--amber-bg)}
+.user-chip{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:4px 12px;border-radius:20px}
+.user-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 28px;background:var(--surface);border-bottom:1px solid var(--border)}
+.toolbar-label{font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+select,.btn{font-family:var(--sans);font-size:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--r);padding:5px 11px;cursor:pointer;outline:none;box-shadow:var(--shadow)}
+select:hover,.btn:hover{border-color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent2);color:#fff;font-weight:500}
+.btn-primary:hover{background:var(--accent2)}
+.toolbar-sep{width:1px;height:22px;background:var(--border)}
+#refresh-time{font-family:var(--mono);font-size:11px;color:var(--muted2);margin-left:auto}
+
+/* LAYOUT */
+.page{padding:20px 28px;max-width:1700px;margin:0 auto}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .2s,border-color .2s;cursor:default}
+.kpi-card:hover{box-shadow:var(--shadow-md);border-color:var(--accent)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
+.kpi-card.k-blue::before{background:var(--accent)}
+.kpi-card.k-green::before{background:var(--green)}
+.kpi-card.k-red::before{background:var(--red)}
+.kpi-card.k-amber::before{background:var(--amber)}
+.kpi-card.k-purple::before{background:var(--purple)}
+.kpi-card.k-teal::before{background:var(--teal)}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);margin-bottom:8px}
+.kpi-val{font-size:24px;font-weight:600;line-height:1;margin-bottom:5px;color:var(--text)}
+.kpi-val.green{color:var(--green)}.kpi-val.red{color:var(--red)}.kpi-val.amber{color:var(--amber)}.kpi-val.purple{color:var(--purple)}.kpi-val.teal{color:var(--teal)}
+.kpi-sub{font-size:11px;color:var(--muted)}.kpi-sub b{color:var(--text)}
+
+/* GRIDS */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.grid-1{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px}
+
+/* WIDGET */
+.widget{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.widget-head{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border2);background:var(--surface)}
+.widget-title{font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--text)}
+.widget-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:5px;font-size:11px;background:var(--accent-bg);color:var(--accent);flex-shrink:0}
+.widget-actions{display:flex;gap:5px;align-items:center}
+.wbtn{font-size:11px;font-family:var(--mono);background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:3px 9px;cursor:pointer;transition:all .15s}
+.wbtn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.wbtn.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.widget-body{padding:14px 16px;flex:1;overflow:auto}
+.widget-body.no-pad{padding:0;flex:1;overflow:auto}
+.widget-foot{padding:7px 16px;border-top:1px solid var(--border2);font-size:10px;color:var(--muted2);font-family:var(--mono);flex-shrink:0;background:var(--surface2)}
+
+/* SECTION SEP */
+.section-sep{display:flex;align-items:center;gap:12px;margin:6px 0 12px}
+.section-sep span{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;background:var(--bg);padding:0 8px}
+.section-sep::before,.section-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* STATUS PILLS */
+.pill{font-family:var(--mono);font-size:10px;font-weight:500;padding:2px 9px;border-radius:20px;letter-spacing:.04em;white-space:nowrap}
+.p-open{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.p-closed{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.p-frozen{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.p-error{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+
+/* PERIOD CLOSE */
+.period-grid{display:flex;flex-direction:column;gap:6px}
+.period-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2)}
+.period-row:hover{border-color:var(--border)}
+.period-name{font-family:var(--mono);font-size:12px;font-weight:500;flex-shrink:0;width:80px}
+.period-ledger{font-size:11px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.period-dates{font-size:10px;color:var(--muted2);font-family:var(--mono);flex-shrink:0}
+
+/* JE BARS */
+.je-bars{display:flex;flex-direction:column;gap:10px}
+.je-bar-row{display:flex;align-items:center;gap:10px}
+.je-bar-label{width:150px;flex-shrink:0}
+.je-track{flex:1;height:7px;background:var(--border2);border-radius:4px;overflow:hidden}
+.je-fill{height:100%;border-radius:4px;transition:width .7s ease}
+.je-count{font-family:var(--mono);font-size:12px;width:45px;text-align:right;flex-shrink:0}
+.je-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.je-stat{text-align:center;padding:10px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2)}
+.je-stat-val{font-family:var(--mono);font-size:16px;font-weight:600}
+.je-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* TRIAL BALANCE */
+.tb-filter-row{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border2);background:var(--surface2);flex-shrink:0;align-items:center}
+.tb-search{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;font-family:var(--mono);font-size:11px;outline:none}
+.tb-search:focus{border-color:var(--accent)}
+.tb-wrap{overflow:auto;max-height:260px}
+.tb-table{width:100%;border-collapse:collapse;font-size:12px}
+.tb-table th{text-align:left;padding:7px 12px;font-family:var(--mono);font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);position:sticky;top:0;z-index:1}
+.tb-table th.num,.tb-table td.num{text-align:right}
+.tb-table td{padding:7px 12px;border-bottom:1px solid var(--border2)}
+.tb-table td.num{font-family:var(--mono);font-size:11px}
+.tb-table tbody tr:hover td{background:var(--surface2)}
+.at{font-size:10px;padding:2px 7px;border-radius:4px;font-family:var(--mono)}
+.at-A{background:var(--accent-bg);color:var(--accent)}
+.at-L{background:var(--red-bg);color:var(--red)}
+.at-E{background:var(--amber-bg);color:var(--amber)}
+.at-R{background:var(--green-bg);color:var(--green)}
+.at-O{background:var(--purple-bg);color:var(--purple)}
+.dr{color:var(--accent)}.cr{color:var(--green)}.neg{color:var(--red)}
+.seg{font-family:var(--mono);font-size:10px;color:var(--muted2)}
+.tb-footer{padding:8px 16px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;display:flex;justify-content:space-between;color:var(--muted);background:var(--surface2);flex-shrink:0}
+
+/* BUDGET VS ACTUAL */
+.bva-list{display:flex;flex-direction:column;gap:10px}
+.bva-item{border-bottom:1px solid var(--border2);padding-bottom:10px}
+.bva-item:last-child{border-bottom:none;padding-bottom:0}
+.bva-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.bva-cc{font-size:12px;font-weight:500}
+.bva-pct{font-family:var(--mono);font-size:12px}
+.over{color:var(--red)}.under{color:var(--green)}.warn{color:var(--amber)}
+.bva-track{height:7px;background:var(--border2);border-radius:4px;overflow:hidden;position:relative}
+.bva-bg{position:absolute;top:0;left:0;height:100%;width:100%;border-radius:4px;background:var(--border)}
+.bva-bar{position:absolute;top:0;left:0;height:100%;border-radius:4px}
+.bva-nums{display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted);font-family:var(--mono)}
+
+/* DATA TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{text-align:left;padding:7px 12px;font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);position:sticky;top:0}
+.data-table th.num{text-align:right}
+.data-table td{padding:7px 12px;border-bottom:1px solid var(--border2)}
+.data-table td.num{text-align:right;font-family:var(--mono);font-size:11px}
+.data-table tbody tr:hover td{background:var(--surface2)}
+.alert-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px}
+.dot-red{background:var(--red);box-shadow:0 0 5px rgba(220,38,38,.4)}
+.dot-amber{background:var(--amber);box-shadow:0 0 5px rgba(217,119,6,.4)}
+.dot-green{background:var(--green)}
+
+/* INTERCO */
+.ico-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ico-pair{padding:11px 13px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px}
+.ico-pair.unmatched{border-color:var(--red-bd);background:var(--red-bg)}
+.ico-pair.matched{border-color:var(--green-bd);background:var(--green-bg)}
+.ico-company{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px}
+.ico-acct{font-size:12px;font-weight:500;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ico-bal{font-family:var(--mono);font-size:13px;display:flex;justify-content:space-between}
+.ico-status{font-size:10px;font-family:var(--mono);margin-top:5px}
+
+/* RECURRING JE */
+.recur-grid{display:flex;flex-direction:column;gap:7px}
+.recur-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2)}
+.recur-name{font-size:12px;font-weight:500;flex:1}
+.recur-track{width:90px;height:6px;background:var(--border2);border-radius:3px;overflow:hidden;flex-shrink:0}
+.recur-fill{height:100%;border-radius:3px}
+.recur-pct{font-family:var(--mono);font-size:11px;width:38px;text-align:right;flex-shrink:0}
+.recur-count{font-size:10px;color:var(--muted);font-family:var(--mono);flex-shrink:0}
+
+/* JE AGEING */
+.age-bands{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.age-band{padding:10px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2);text-align:center}
+.age-band-val{font-family:var(--mono);font-size:18px;font-weight:600}
+.age-band-lbl{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* RECONCILIATION */
+.recon-grid{display:flex;flex-direction:column;gap:6px}
+.recon-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2)}
+.recon-acct{font-size:12px;font-weight:500;flex:1}
+.recon-status{font-size:10px;font-family:var(--mono);font-weight:500;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.rs-done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.rs-prog{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.rs-over{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.rs-none{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.recon-who{font-size:10px;color:var(--muted);flex-shrink:0}
+.recon-bal{font-size:10px;color:var(--muted2);font-family:var(--mono);flex-shrink:0}
+
+/* FX */
+.fx-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.fx-card{padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;text-align:center}
+.fx-card-val{font-family:var(--mono);font-size:16px;font-weight:600}
+.fx-card-lbl{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* RING */
+.ring-wrap{display:flex;align-items:center;gap:16px;margin-bottom:12px}
+.ring{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--border2);stroke-width:6}
+.ring-fill{fill:none;stroke-width:6;stroke-linecap:round}
+.ring-label{text-align:center}
+.ring-pct{font-family:var(--mono);font-size:22px;font-weight:600}
+.ring-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* CHAT */
+.chat-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;height:420px;box-shadow:var(--shadow)}
+.chat-head{padding:11px 16px;border-bottom:1px solid var(--border2);background:var(--surface2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-radius:10px 10px 0 0}
+.chat-title{font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(37,99,235,.4);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.chat-tag{font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--accent-bg);border:1px solid rgba(37,99,235,.2);padding:2px 8px;border-radius:4px}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%}
+.msg.ai{align-self:flex-start}.msg.user{align-self:flex-end}
+.msg-lbl{font-size:10px;color:var(--muted2);font-family:var(--mono);margin-bottom:3px}
+.msg-bubble{padding:9px 13px;border-radius:10px;font-size:12px;line-height:1.6}
+.msg.ai .msg-bubble{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:2px 10px 10px 10px}
+.msg.user .msg-bubble{background:var(--accent);border:1px solid var(--accent2);color:#fff;border-radius:10px 2px 10px 10px}
+.typing-dots span{display:inline-block;width:5px;height:5px;background:var(--muted2);border-radius:50%;margin:0 2px;animation:dot 1.2s infinite}
+.typing-dots span:nth-child(2){animation-delay:.2s}.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.quick-qs{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px;border-top:1px solid var(--border2);flex-shrink:0;background:var(--surface2)}
+.qq-lbl{font-size:10px;color:var(--muted);font-family:var(--mono);width:100%;margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em}
+.quick-qs button{font-size:11px;padding:4px 10px;border-radius:5px;background:var(--surface);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s}
+.quick-qs button:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.chat-input-row{padding:10px 12px;border-top:1px solid var(--border2);display:flex;gap:8px;flex-shrink:0}
+.chat-input{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:8px 12px;font-family:var(--sans);font-size:12px;outline:none}
+.chat-input:focus{border-color:var(--accent)}
+.chat-send{background:var(--accent);border:1px solid var(--accent2);color:#fff;border-radius:7px;padding:8px 16px;font-size:12px;cursor:pointer;font-weight:500}
+.chat-send:hover{background:var(--accent2)}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="page-loader">
+  <div class="loader-logo">EBS · GL</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+  <div class="loader-text">Loading GL Intelligence Hub…</div>
+</div>
+
+<nav class="topbar">
+  <div class="topbar-left">
+    <div class="logo">EBS GL</div>
+    <div class="breadcrumb">General Ledger &rsaquo; <span>Intelligence Hub</span></div>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-badge open">APR-2026</div>
+    <div class="topbar-badge open">● OPEN</div>
+    <div class="user-chip"><div class="user-dot"></div>SAKETH.REDDY</div>
+  </div>
+</nav>
+
+<div class="toolbar">
+  <span class="toolbar-label">Ledger</span>
+  <select>
+    <option>★ Corp Primary Ledger (USD)</option>
+    <option>◦ EMEA Secondary (EUR)</option>
+    <option>◦ APAC Secondary (SGD)</option>
+  </select>
+  <div class="toolbar-sep"></div>
+  <span class="toolbar-label">Period</span>
+  <select>
+    <option>APR-2026 [O]</option>
+    <option>MAR-2026 [C]</option>
+    <option>FEB-2026 [C]</option>
+    <option>JAN-2026 [C]</option>
+  </select>
+  <div class="toolbar-sep"></div>
+  <span class="toolbar-label">Scope</span>
+  <select>
+    <option>Single Ledger</option>
+    <option selected>Multi-Ledger</option>
+  </select>
+  <button class="btn btn-primary">↻ Refresh</button>
+  <div id="refresh-time">Refreshed: 09:42:18 &nbsp;·&nbsp; Next in 15m</div>
+</div>
+
+<div class="page">
+
+  <!-- KPI ROW 1 -->
+  <div class="section-sep"><span>Core Controls</span></div>
+  <div class="kpi-row">
+    <div class="kpi-card k-blue">
+      <div class="kpi-label">Trial Balance Dr</div>
+      <div class="kpi-val green">84.2M</div>
+      <div class="kpi-sub"><b>84.2M</b> Cr &nbsp;·&nbsp; <span style="color:var(--green)">✓ Balanced</span></div>
+    </div>
+    <div class="kpi-card k-amber">
+      <div class="kpi-label">Unposted Journals</div>
+      <div class="kpi-val amber">14</div>
+      <div class="kpi-sub"><b style="color:var(--red)">3</b> in error &nbsp;·&nbsp; <b>312</b> posted</div>
+    </div>
+    <div class="kpi-card k-green">
+      <div class="kpi-label">Period Status</div>
+      <div class="kpi-val green">OPEN</div>
+      <div class="kpi-sub">APR-2026 &nbsp;·&nbsp; 01–30 Apr</div>
+    </div>
+    <div class="kpi-card k-red">
+      <div class="kpi-label">Suspense Balances</div>
+      <div class="kpi-val red">4</div>
+      <div class="kpi-sub">Non-zero &nbsp;·&nbsp; <b>238K</b> total</div>
+    </div>
+    <div class="kpi-card k-amber">
+      <div class="kpi-label">ICO Imbalance</div>
+      <div class="kpi-val amber">2</div>
+      <div class="kpi-sub">Unmatched &nbsp;·&nbsp; <b>45K</b> gap</div>
+    </div>
+  </div>
+
+  <!-- KPI ROW 2 -->
+  <div class="section-sep"><span>Extended Metrics</span></div>
+  <div class="kpi-row">
+    <div class="kpi-card k-blue">
+      <div class="kpi-label">Budget Utilisation</div>
+      <div class="kpi-val amber">74%</div>
+      <div class="kpi-sub"><b style="color:var(--red)">3</b> CCs over budget</div>
+    </div>
+    <div class="kpi-card k-purple">
+      <div class="kpi-label">Recurring JE Completion</div>
+      <div class="kpi-val purple">88%</div>
+      <div class="kpi-sub">30/35 recurring JEs posted</div>
+    </div>
+    <div class="kpi-card k-red">
+      <div class="kpi-label">JEs Pending Approval 24h+</div>
+      <div class="kpi-val red">7</div>
+      <div class="kpi-sub">2 critical &gt;72h</div>
+    </div>
+    <div class="kpi-card k-amber">
+      <div class="kpi-label">Reconciliation Overdue</div>
+      <div class="kpi-val amber">1</div>
+      <div class="kpi-sub">6/8 accounts reconciled</div>
+    </div>
+    <div class="kpi-card k-teal">
+      <div class="kpi-label">Unrealised FX Gain/Loss</div>
+      <div class="kpi-val teal">+116K</div>
+      <div class="kpi-sub">4 CCY positions &nbsp;·&nbsp; 2 loss</div>
+    </div>
+  </div>
+
+  <!-- PERIOD CLOSE + JE STATUS -->
+  <div class="section-sep"><span>Period Controls</span></div>
+  <div class="grid-2">
+
+    <div class="widget">
+      <div class="widget-head">
+        <div class="widget-title"><div class="widget-icon">⊡</div>Period Close Status</div>
+        <div class="widget-actions">
+          <button class="wbtn active">3 Periods</button>
+          <button class="wbtn">6 Periods</button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div class="period-grid">
+          <div class="period-row">
+            <div class="period-name">APR-2026</div>
+            <div class="period-ledger">Corp Primary (USD)</div>
+            <span class="pill p-open">OPEN</span>
+            <div class="period-dates">01–30 Apr 2026</div>
+          </div>
+          <div class="period-row">
+            <div class="period-name">MAR-2026</div>
+            <div class="period-ledger">Corp Primary (USD)</div>
+            <span class="pill p-closed">CLOSED</span>
+            <div class="period-dates">01–31 Mar 2026</div>
+          </div>
+          <div class="period-row">
+            <div class="period-name">FEB-2026</div>
+            <div class="period-ledger">Corp Primary (USD)</div>
+            <span class="pill p-closed">CLOSED</span>
+            <div class="period-dates">01–28 Feb 2026</div>
+          </div>
+          <div class="period-row">
+            <div class="period-name">APR-2026</div>
+            <div class="period-ledger">EMEA Secondary (EUR)</div>
+            <span class="pill p-open">OPEN</span>
+            <div class="period-dates">01–30 Apr 2026</div>
+          </div>
+          <div class="period-row">
+            <div class="period-name">MAR-2026</div>
+            <div class="period-ledger">EMEA Secondary (EUR)</div>
+            <span class="pill p-frozen">FROZEN</span>
+            <div class="period-dates">01–31 Mar 2026</div>
+          </div>
+          <div class="period-row">
+            <div class="period-name">APR-2026</div>
+            <div class="period-ledger">APAC Secondary (SGD)</div>
+            <span class="pill p-open">OPEN</span>
+            <div class="period-dates">01–30 Apr 2026</div>
+          </div>
+        </div>
+      </div>
+      <div class="widget-foot">gl_period_statuses · application_id=101 · 6 rows</div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-head">
+        <div class="widget-title"><div class="widget-icon">≡</div>Journal Entry Status — APR-2026</div>
+        <div class="widget-actions">
+          <button class="wbtn" style="color:var(--red);border-color:var(--red-bd)">⚠ Errors</button>
+          <button class="wbtn">Unposted</button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div class="je-bars">
+          <div class="je-bar-row">
+            <div class="je-bar-label"><span class="pill" style="background:transparent;border:1px solid var(--green);color:var(--green)">Posted</span></div>
+            <div class="je-track"><div class="je-fill" style="width:93%;background:var(--green)"></div></div>
+            <div class="je-count" style="color:var(--green)">312</div>
+          </div>
+          <div class="je-bar-row">
+            <div class="je-bar-label"><span class="pill" style="background:transparent;border:1px solid var(--amber);color:var(--amber)">Unposted</span></div>
+            <div class="je-track"><div class="je-fill" style="width:33%;background:var(--amber)"></div></div>
+            <div class="je-count" style="color:var(--amber)">11</div>
+          </div>
+          <div class="je-bar-row">
+            <div class="je-bar-label"><span class="pill" style="background:transparent;border:1px solid var(--red);color:var(--red)">In Error</span></div>
+            <div class="je-track"><div class="je-fill" style="width:9%;background:var(--red)"></div></div>
+            <div class="je-count" style="color:var(--red)">3</div>
+          </div>
+          <div class="je-bar-row">
+            <div class="je-bar-label"><span class="pill" style="background:transparent;border:1px solid var(--accent);color:var(--accent)">Selected</span></div>
+            <div class="je-track"><div class="je-fill" style="width:3%;background:var(--accent)"></div></div>
+            <div class="je-count" style="color:var(--accent)">1</div>
+          </div>
+        </div>
+        <div class="je-stats">
+          <div class="je-stat"><div class="je-stat-val">327</div><div class="je-stat-lbl">Total Batches</div></div>
+          <div class="je-stat"><div class="je-stat-val" style="color:var(--green)">84.2M</div><div class="je-stat-lbl">Posted Dr</div></div>
+          <div class="je-stat"><div class="je-stat-val" style="color:var(--red)">3</div><div class="je-stat-lbl">In Error</div></div>
+          <div class="je-stat"><div class="je-stat-val" style="color:var(--amber)">11</div><div class="je-stat-lbl">Unposted</div></div>
+        </div>
+      </div>
+      <div class="widget-foot">gl_je_batches + gl_je_headers · 327 batches this period</div>
+    </div>
+  </div>
+
+  <!-- TRIAL BALANCE -->
+  <div class="section-sep"><span>Trial Balance</span></div>
+  <div class="grid-1">
+    <div class="widget">
+      <div class="widget-head">
+        <div class="widget-title"><div class="widget-icon">⊞</div>Period-End Trial Balance — APR-2026 · Corp Primary (USD)</div>
+        <div class="widget-actions">
+          <button class="wbtn active">All</button>
+          <button class="wbtn">Assets</button>
+          <button class="wbtn">Liabilities</button>
+          <button class="wbtn">Expenses</button>
+          <button class="wbtn">Revenue</button>
+        </div>
+      </div>
+      <div class="tb-filter-row">
+        <input class="tb-search" placeholder="Search account, segment, description…">
+      </div>
+      <div class="widget-body no-pad">
+        <div class="tb-wrap">
+          <table class="tb-table">
+            <thead>
+              <tr><th>Co</th><th>CC</th><th>Account</th><th>Type</th><th class="num">Opening</th><th class="num">Period Dr</th><th class="num">Period Cr</th><th class="num">Closing Balance</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="seg">01</span></td><td><span class="seg">1000</span></td><td>Cash &amp; Bank — Citibank Operating</td><td><span class="at at-A">Asset</span></td><td class="num">12,450,000</td><td class="num dr">8,200,000</td><td class="num cr">7,100,000</td><td class="num dr">13,550,000</td></tr>
+              <tr><td><span class="seg">01</span></td><td><span class="seg">1000</span></td><td>Accounts Receivable — Trade</td><td><span class="at at-A">Asset</span></td><td class="num">9,800,000</td><td class="num dr">5,400,000</td><td class="num cr">4,200,000</td><td class="num dr">11,000,000</td></tr>
+              <tr><td><span class="seg">01</span></td><td><span class="seg">1000</span></td><td>Accounts Payable — Trade</td><td><span class="at at-L">Liability</span></td><td class="num neg">(6,300,000)</td><td class="num dr">4,100,000</td><td class="num cr">5,800,000</td><td class="num neg">(8,000,000)</td></tr>
+              <tr><td><span class="seg">01</span></td><td><span class="seg">2000</span></td><td>Salaries &amp; Wages Expense</td><td><span class="at at-E">Expense</span></td><td class="num">—</td><td class="num dr">3,200,000</td><td class="num cr">—</td><td class="num dr">3,200,000</td></tr>
+              <tr><td><span class="seg">01</span></td><td><span class="seg">3000</span></td><td>Revenue — Product Sales</td><td><span class="at at-R">Revenue</span></td><td class="num neg">(2,100,000)</td><td class="num dr">—</td><td class="num cr">6,700,000</td><td class="num neg">(8,800,000)</td></tr>
+              <tr><td><span class="seg">01</span></td><td><span class="seg">1000</span></td><td>Prepaid Expenses</td><td><span class="at at-A">Asset</span></td><td class="num">980,000</td><td class="num dr">250,000</td><td class="num cr">310,000</td><td class="num dr">920,000</td></tr>
+              <tr><td><span class="seg">02</span></td><td><span class="seg">2100</span></td><td>IT &amp; Technology Expense</td><td><span class="at at-E">Expense</span></td><td class="num">—</td><td class="num dr">980,000</td><td class="num cr">50,000</td><td class="num dr">930,000</td></tr>
+              <tr><td><span class="seg">01</span></td><td><span class="seg">4000</span></td><td>Retained Earnings</td><td><span class="at at-O">Equity</span></td><td class="num neg">(18,400,000)</td><td class="num dr">—</td><td class="num cr">—</td><td class="num neg">(18,400,000)</td></tr>
+              <tr><td><span class="seg">02</span></td><td><span class="seg">3000</span></td><td>Revenue — Services</td><td><span class="at at-R">Revenue</span></td><td class="num neg">(1,200,000)</td><td class="num dr">—</td><td class="num cr">2,100,000</td><td class="num neg">(3,300,000)</td></tr>
+              <tr><td><span class="seg">01</span></td><td><span class="seg">2000</span></td><td>Rent &amp; Facilities Expense</td><td><span class="at at-E">Expense</span></td><td class="num">—</td><td class="num dr">1,450,000</td><td class="num cr">—</td><td class="num dr">1,450,000</td></tr>
+              <tr style="background:var(--surface2);font-weight:600">
+                <td colspan="4" style="font-family:var(--mono);font-size:11px;color:var(--muted)">TOTALS (200 rows max, 10 shown)</td>
+                <td class="num" style="font-family:var(--mono)">84,200,000</td>
+                <td class="num dr" style="font-family:var(--mono)">84,200,000</td>
+                <td class="num cr" style="font-family:var(--mono)">84,200,000</td>
+                <td class="num" style="color:var(--green);font-family:var(--mono)">✓ Balanced</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tb-footer">
+        <span>10 / 200 rows shown</span>
+        <span>Dr 84,200,000 &nbsp;|&nbsp; Cr 84,200,000 &nbsp;|&nbsp; <span style="color:var(--green)">✓ Balanced</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUDGET vs ACTUAL + SUSPENSE -->
+  <div class="section-sep"><span>Budget Controls &amp; Exceptions</span></div>
+  <div class="grid-2">
+
+    <div class="widget">
+      <div class="widget-head">
+        <div class="widget-title"><div class="widget-icon">◫</div>Budget vs Actual by Cost Centre</div>
+        <div class="widget-actions">
+          <button class="wbtn">Overruns</button>
+          <button class="wbtn active">All</button>
+        </div>
+      </div>
+      <div class="widget-body" style="overflow-y:auto;max-height:280px">
+        <div class="bva-list">
+          <div class="bva-item">
+            <div class="bva-top"><div class="bva-cc">2000 · Human Resources</div><div class="bva-pct over">114% ▲</div></div>
+            <div class="bva-track"><div class="bva-bg"></div><div class="bva-bar" style="width:114%;background:var(--red)"></div></div>
+            <div class="bva-nums"><span>Actual: 3,200,000</span><span>Budget: 2,800,000</span><span style="color:var(--red)">+400K over</span></div>
+          </div>
+          <div class="bva-item">
+            <div class="bva-top"><div class="bva-cc">3000 · Sales &amp; Marketing</div><div class="bva-pct warn">108% ▲</div></div>
+            <div class="bva-track"><div class="bva-bg"></div><div class="bva-bar" style="width:108%;background:var(--amber)"></div></div>
+            <div class="bva-nums"><span>Actual: 2,160,000</span><span>Budget: 2,000,000</span><span style="color:var(--amber)">+160K over</span></div>
+          </div>
+          <div class="bva-item">
+            <div class="bva-top"><div class="bva-cc">1000 · Finance &amp; Accounting</div><div class="bva-pct under">82% ✓</div></div>
+            <div class="bva-track"><div class="bva-bg"></div><div class="bva-bar" style="width:82%;background:var(--green)"></div></div>
+            <div class="bva-nums"><span>Actual: 1,640,000</span><span>Budget: 2,000,000</span><span style="color:var(--green)">-360K under</span></div>
+          </div>
+          <div class="bva-item">
+            <div class="bva-top"><div class="bva-cc">4000 · Operations</div><div class="bva-pct warn">103% ▲</div></div>
+            <div class="bva-track"><div class="bva-bg"></div><div class="bva-bar" style="width:103%;background:var(--amber)"></div></div>
+            <div class="bva-nums"><span>Actual: 1,545,000</span><span>Budget: 1,500,000</span><span style="color:var(--amber)">+45K over</span></div>
+          </div>
+          <div class="bva-item">
+            <div class="bva-top"><div class="bva-cc">2100 · IT &amp; Technology</div><div class="bva-pct under">65% ✓</div></div>
+            <div class="bva-track"><div class="bva-bg"></div><div class="bva-bar" style="width:65%;background:var(--green)"></div></div>
+            <div class="bva-nums"><span>Actual: 980,000</span><span>Budget: 1,500,000</span><span style="color:var(--green)">-520K under</span></div>
+          </div>
+          <div class="bva-item">
+            <div class="bva-top"><div class="bva-cc">5000 · Research &amp; Dev</div><div class="bva-pct under">71% ✓</div></div>
+            <div class="bva-track"><div class="bva-bg"></div><div class="bva-bar" style="width:71%;background:var(--green)"></div></div>
+            <div class="bva-nums"><span>Actual: 1,065,000</span><span>Budget: 1,500,000</span><span style="color:var(--green)">-435K under</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="widget-foot">gl_balances · actual_flag IN ('A','B') · 6 of 30 cost centres</div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-head">
+        <div class="widget-title"><div class="widget-icon">⚠</div>Suspense &amp; Clearing Balances</div>
+        <div class="widget-actions">
+          <button class="wbtn active">All</button>
+          <button class="wbtn">&gt;10K</button>
+        </div>
+      </div>
+      <div class="widget-body no-pad" style="overflow:auto;max-height:260px">
+        <table class="data-table">
+          <thead><tr><th>Account</th><th>Ledger</th><th>Type</th><th class="num">Period Dr</th><th class="num">Period Cr</th><th class="num">Closing Bal</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="alert-dot dot-red"></span>99100 — Suspense Control</td>
+              <td style="font-size:11px;color:var(--muted)">Corp Primary</td>
+              <td><span class="at at-L">L</span></td>
+              <td class="num dr">450,000</td><td class="num cr">312,000</td><td class="num dr" style="color:var(--red)">138,000</td>
+            </tr>
+            <tr>
+              <td><span class="alert-dot dot-amber"></span>99200 — AP Clearing</td>
+              <td style="font-size:11px;color:var(--muted)">Corp Primary</td>
+              <td><span class="at at-A">A</span></td>
+              <td class="num dr">2,100,000</td><td class="num cr">2,055,000</td><td class="num dr" style="color:var(--amber)">45,000</td>
+            </tr>
+            <tr>
+              <td><span class="alert-dot dot-amber"></span>99300 — Interco Clearing</td>
+              <td style="font-size:11px;color:var(--muted)">EMEA Secondary</td>
+              <td><span class="at at-A">A</span></td>
+              <td class="num dr">800,000</td><td class="num cr">745,000</td><td class="num dr" style="color:var(--amber)">55,000</td>
+            </tr>
+            <tr>
+              <td><span class="alert-dot dot-green"></span>99400 — Bank Clearing</td>
+              <td style="font-size:11px;color:var(--muted)">Corp Primary</td>
+              <td><span class="at at-A">A</span></td>
+              <td class="num dr">190,000</td><td class="num cr">190,000</td><td class="num cr">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="widget-foot">gl_suspense_accounts + description match · 4 non-zero accounts · 238K total</div>
+    </div>
+  </div>
+
+  <!-- INTERCO + RECURRING JE -->
+  <div class="section-sep"><span>Intercompany &amp; Recurring Journals</span></div>
+  <div class="grid-2">
+
+    <div class="widget">
+      <div class="widget-head">
+        <div class="widget-title"><div class="widget-icon">⇄</div>Inter-Company Balances</div>
+        <div class="widget-actions">
+          <button class="wbtn active">All</button>
+          <button class="wbtn">Unmatched</button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:10px">2 unmatched pair(s) · ICO gap: 45K</div>
+        <div class="ico-grid">
+          <div class="ico-pair unmatched">
+            <div class="ico-company">Corp Primary · Co 01</div>
+            <div class="ico-acct">14100 — Due From Affiliate</div>
+            <div class="ico-bal"><span>Balance:</span><span style="color:var(--accent)">250,000</span></div>
+            <div class="ico-status" style="color:var(--red)">✗ Unmatched · Gap: 45K</div>
+          </div>
+          <div class="ico-pair unmatched">
+            <div class="ico-company">EMEA Secondary · Co 02</div>
+            <div class="ico-acct">24100 — Due To Corp Parent</div>
+            <div class="ico-bal"><span>Balance:</span><span style="color:var(--red)">(205,000)</span></div>
+            <div class="ico-status" style="color:var(--red)">✗ Unmatched · Gap: 45K</div>
+          </div>
+          <div class="ico-pair matched">
+            <div class="ico-company">Corp Primary · Co 01</div>
+            <div class="ico-acct">14200 — Due From APAC</div>
+            <div class="ico-bal"><span>Balance:</span><span style="color:var(--accent)">120,000</span></div>
+            <div class="ico-status" style="color:var(--green)">✓ Matched</div>
+          </div>
+          <div class="ico-pair matched">
+            <div class="ico-company">APAC Secondary · Co 03</div>
+            <div class="ico-acct">24200 — Due To Corp</div>
+            <div class="ico-bal"><span>Balance:</span><span style="color:var(--red)">(120,000)</span></div>
+            <div class="ico-status" style="color:var(--green)">✓ Matched</div>
+          </div>
+        </div>
+      </div>
+      <div class="widget-foot">reference1='Y' + description match · 4 IC accounts · 2 unmatched</div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-head">
+        <div class="widget-title">
+          <div class="widget-icon" style="background:var(--purple-bg);color:var(--purple)">↺</div>
+          Recurring Journal Completion
+        </div>
+        <div class="widget-actions">
+          <button class="wbtn">Details</button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div class="ring-wrap">
+          <svg class="ring" width="90" height="90" viewBox="0 0 90 90">
+            <circle class="ring-bg" cx="45" cy="45" r="36"/>
+            <circle class="ring-fill" cx="45" cy="45" r="36"
+              stroke="var(--amber)"
+              stroke-dasharray="198.6 226.2"
+              stroke-dashoffset="0"/>
+          </svg>
+          <div class="ring-label">
+            <div class="ring-pct" style="color:var(--amber)">88%</div>
+            <div class="ring-sub">30/35 posted</div>
+          </div>
+        </div>
+        <div class="recur-grid">
+          <div class="recur-row">
+            <div class="recur-name">Depreciation</div>
+            <div class="recur-track"><div class="recur-fill" style="width:100%;background:var(--green)"></div></div>
+            <div class="recur-pct" style="color:var(--green)">100%</div>
+            <div class="recur-count">12/12</div>
+          </div>
+          <div class="recur-row">
+            <div class="recur-name">Accruals</div>
+            <div class="recur-track"><div class="recur-fill" style="width:88%;background:var(--amber)"></div></div>
+            <div class="recur-pct" style="color:var(--amber)">88%</div>
+            <div class="recur-count">7/8 <span style="color:var(--red)">-1</span></div>
+          </div>
+          <div class="recur-row">
+            <div class="recur-name">Prepayment Amort.</div>
+            <div class="recur-track"><div class="recur-fill" style="width:100%;background:var(--green)"></div></div>
+            <div class="recur-pct" style="color:var(--green)">100%</div>
+            <div class="recur-count">5/5</div>
+          </div>
+          <div class="recur-row">
+            <div class="recur-name">Payroll Accrual</div>
+            <div class="recur-track"><div class="recur-fill" style="width:75%;background:var(--amber)"></div></div>
+            <div class="recur-pct" style="color:var(--amber)">75%</div>
+            <div class="recur-count">3/4 <span style="color:var(--red)">-1</span></div>
+          </div>
+          <div class="recur-row">
+            <div class="recur-name">Interco Charges</div>
+            <div class="recur-track"><div class="recur-fill" style="width:100%;background:var(--green)"></div></div>
+            <div class="recur-pct" style="color:var(--green)">100%</div>
+            <div class="recur-count">6/6</div>
+          </div>
+        </div>
+      </div>
+      <div class="widget-foot">gl_je_batches · je_category IN ('Accrual','Depreciation','Prepayment') · 5 missing</div>
+    </div>
+  </div>
+
+  <!-- JE AGEING + RECONCILIATION -->
+  <div class="section-sep"><span>Approval Ageing &amp; Reconciliation</span></div>
+  <div class="grid-2">
+
+    <div class="widget">
+      <div class="widget-head">
+        <div class="widget-title">
+          <div class="widget-icon" style="background:var(--red-bg);color:var(--red)">⏱</div>
+          Unapproved Journal Entry Ageing
+        </div>
+        <div class="widget-actions">
+          <button class="wbtn">Full List</button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div class="age-bands">
+          <div class="age-band"><div class="age-band-val" style="color:var(--green)">7</div><div class="age-band-lbl">&lt;24h</div></div>
+          <div class="age-band"><div class="age-band-val" style="color:var(--amber)">3</div><div class="age-band-lbl">24–48h</div></div>
+          <div class="age-band"><div class="age-band-val" style="color:var(--amber)">2</div><div class="age-band-lbl">48–72h</div></div>
+          <div class="age-band"><div class="age-band-val" style="color:var(--red)">2</div><div class="age-band-lbl">&gt;72h ⚠</div></div>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Batch</th><th>Source</th><th>Created</th><th>Age</th><th class="num">Total Dr</th><th>Risk</th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-size:11px">Q1 Reclass — Corp</td>
+              <td style="font-size:11px;color:var(--muted)">Manual</td>
+              <td style="font-size:11px;font-family:var(--mono);color:var(--muted)">08-APR-2026</td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--red)">84h</td>
+              <td class="num">1,200,000</td>
+              <td><span style="color:var(--red);font-family:var(--mono);font-size:10px">HIGH</span></td>
+            </tr>
+            <tr>
+              <td style="font-size:11px">FX Revaluation APR</td>
+              <td style="font-size:11px;color:var(--muted)">Revaluation</td>
+              <td style="font-size:11px;font-family:var(--mono);color:var(--muted)">09-APR-2026</td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--red)">62h</td>
+              <td class="num">980,000</td>
+              <td><span style="color:var(--amber);font-family:var(--mono);font-size:10px">MED</span></td>
+            </tr>
+            <tr>
+              <td style="font-size:11px">Payroll Apr Wk2</td>
+              <td style="font-size:11px;color:var(--muted)">Payroll</td>
+              <td style="font-size:11px;font-family:var(--mono);color:var(--muted)">10-APR-2026</td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--amber)">38h</td>
+              <td class="num">3,400,000</td>
+              <td><span style="color:var(--amber);font-family:var(--mono);font-size:10px">MED</span></td>
+            </tr>
+            <tr>
+              <td style="font-size:11px">ICO Charges — EMEA</td>
+              <td style="font-size:11px;color:var(--muted)">Intercompany</td>
+              <td style="font-size:11px;font-family:var(--mono);color:var(--muted)">11-APR-2026</td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--amber)">26h</td>
+              <td class="num">450,000</td>
+              <td><span style="color:var(--muted);font-family:var(--mono);font-size:10px">LOW</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="widget-foot">gl_je_batches · status='U' · 7 journals pending &gt;24h · 2 critical &gt;72h</div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-head">
+        <div class="widget-title">
+          <div class="widget-icon" style="background:var(--teal-bg);color:var(--teal)">✓</div>
+          Balance Sheet Reconciliation Status
+        </div>
+        <div class="widget-actions">
+          <button class="wbtn">Overdue</button>
+          <button class="wbtn active">All</button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div class="recon-grid">
+          <div class="recon-row">
+            <div class="recon-acct">Asset — 11100 Cash &amp; Bank</div>
+            <span class="recon-status rs-done">RECONCILED</span>
+            <div class="recon-who">A. Kumar</div>
+            <div class="recon-bal">13.6M</div>
+          </div>
+          <div class="recon-row">
+            <div class="recon-acct">Asset — 12000 Accounts Receivable</div>
+            <span class="recon-status rs-done">RECONCILED</span>
+            <div class="recon-who">M. Singh</div>
+            <div class="recon-bal">11.0M</div>
+          </div>
+          <div class="recon-row">
+            <div class="recon-acct">Liability — 21000 Accounts Payable</div>
+            <span class="recon-status rs-prog">IN PROGRESS</span>
+            <div class="recon-who">R. Patel</div>
+            <div class="recon-bal">8.0M</div>
+          </div>
+          <div class="recon-row">
+            <div class="recon-acct">Liability — 22000 Accrued Liabilities</div>
+            <span class="recon-status rs-done">RECONCILED</span>
+            <div class="recon-who">A. Kumar</div>
+            <div class="recon-bal">4.2M</div>
+          </div>
+          <div class="recon-row">
+            <div class="recon-acct">Asset — 13000 Prepaid Expenses</div>
+            <span class="recon-status rs-over">OVERDUE</span>
+            <div class="recon-who">M. Singh</div>
+            <div class="recon-bal">920K</div>
+          </div>
+          <div class="recon-row">
+            <div class="recon-acct">Equity — 31000 Retained Earnings</div>
+            <span class="recon-status rs-prog">IN PROGRESS</span>
+            <div class="recon-who">R. Patel</div>
+            <div class="recon-bal">18.4M</div>
+          </div>
+          <div class="recon-row">
+            <div class="recon-acct">Asset — 14000 Fixed Assets Net</div>
+            <span class="recon-status rs-done">RECONCILED</span>
+            <div class="recon-who">A. Kumar</div>
+            <div class="recon-bal">9.1M</div>
+          </div>
+          <div class="recon-row">
+            <div class="recon-acct">Liability — 23000 Long-Term Debt</div>
+            <span class="recon-status rs-none">NOT STARTED</span>
+            <div class="recon-who">—</div>
+            <div class="recon-bal">15.0M</div>
+          </div>
+        </div>
+      </div>
+      <div class="widget-foot">gl_balances · account_type IN ('A','L','O') · 5/8 reconciled</div>
+    </div>
+  </div>
+
+  <!-- FX + CHAT -->
+  <div class="section-sep"><span>FX Exposure &amp; AI Assistant</span></div>
+  <div class="grid-2">
+
+    <div class="widget">
+      <div class="widget-head">
+        <div class="widget-title">
+          <div class="widget-icon" style="background:var(--teal-bg);color:var(--teal)">₿</div>
+          Foreign Currency Revaluation Gain/Loss
+        </div>
+        <div class="widget-actions">
+          <button class="wbtn active">All CCY</button>
+          <button class="wbtn">Drill Down</button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div class="fx-summary">
+          <div class="fx-card"><div class="fx-card-val" style="color:var(--green)">+231K</div><div class="fx-card-lbl">Unrealised Gains</div></div>
+          <div class="fx-card"><div class="fx-card-val" style="color:var(--red)">115K</div><div class="fx-card-lbl">Unrealised Losses</div></div>
+          <div class="fx-card"><div class="fx-card-val" style="color:var(--teal)">+116K</div><div class="fx-card-lbl">Net Gain</div></div>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Currency</th><th>Account</th><th>Ledger</th><th class="num">Foreign Bal</th><th class="num">Functional</th><th class="num">Unrealised G/L</th><th>Direction</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="pill p-open" style="font-size:10px;padding:1px 7px">EUR</span></td>
+              <td style="font-family:var(--mono);font-size:11px">12000</td>
+              <td style="font-size:11px;color:var(--muted)">Corp Primary</td>
+              <td class="num">2.5M</td><td class="num">2.7M</td>
+              <td class="num" style="color:var(--green);font-weight:600">+188K</td>
+              <td><span class="pill p-open">GAIN</span></td>
+            </tr>
+            <tr>
+              <td><span class="pill" style="font-size:10px;padding:1px 7px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)">SGD</span></td>
+              <td style="font-family:var(--mono);font-size:11px">12010</td>
+              <td style="font-size:11px;color:var(--muted)">APAC Secondary</td>
+              <td class="num">1.8M</td><td class="num">1.4M</td>
+              <td class="num" style="color:var(--red);font-weight:600">-87K</td>
+              <td><span class="pill p-error">LOSS</span></td>
+            </tr>
+            <tr>
+              <td><span class="pill p-open" style="font-size:10px;padding:1px 7px">GBP</span></td>
+              <td style="font-family:var(--mono);font-size:11px">12020</td>
+              <td style="font-size:11px;color:var(--muted)">Corp Primary</td>
+              <td class="num">900K</td><td class="num">1.1M</td>
+              <td class="num" style="color:var(--green);font-weight:600">+43K</td>
+              <td><span class="pill p-open">GAIN</span></td>
+            </tr>
+            <tr>
+              <td><span class="pill" style="font-size:10px;padding:1px 7px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)">JPY</span></td>
+              <td style="font-family:var(--mono);font-size:11px">12030</td>
+              <td style="font-size:11px;color:var(--muted)">Corp Primary</td>
+              <td class="num">150M</td><td class="num">1.0M</td>
+              <td class="num" style="color:var(--red);font-weight:600">-28K</td>
+              <td><span class="pill p-error">LOSS</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="widget-foot">gl_balances · currency_code ≠ ledger functional currency · 4 CCY positions · Net gain: 116K</div>
+    </div>
+
+    <div class="chat-panel">
+      <div class="chat-head">
+        <div class="chat-title"><div class="ai-dot"></div>GL AI Assistant</div>
+        <div class="chat-tag">ledger_id: 1 · APR-2026</div>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="msg ai">
+          <div class="msg-lbl">GL Assistant</div>
+          <div class="msg-bubble">Hello SAKETH! Your APR-2026 period is <strong>open</strong>. I see <strong>3 journals in error</strong>, <strong>4 non-zero suspense accounts</strong> (238K total), and <strong>2 unmatched ICO pairs</strong>. Would you like me to investigate any of these?</div>
+        </div>
+        <div class="msg user">
+          <div class="msg-lbl" style="text-align:right">You</div>
+          <div class="msg-bubble">Which cost centres are over budget?</div>
+        </div>
+        <div class="msg ai">
+          <div class="msg-lbl">GL Assistant</div>
+          <div class="msg-bubble">
+            Three cost centres are over budget in APR-2026:<br><br>
+            <strong>HR (2000)</strong> — 114% · +400K overrun<br>
+            <strong>Sales (3000)</strong> — 108% · +160K overrun<br>
+            <strong>Operations (4000)</strong> — 103% · +45K overrun<br><br>
+            Total budget overrun: <strong>605,000 USD</strong>. Finance and IT are well under budget, partially offsetting. Drill into any CC?
+          </div>
+        </div>
+      </div>
+      <div class="quick-qs" id="quick-qs">
+        <div class="qq-lbl">Quick queries</div>
+        <button onclick="demoChat(this,'Which recurring JEs are missing this period?','Depreciation (12/12 ✓) and Interco (6/6 ✓) are complete. <strong>Accruals</strong> is missing 1 of 8 journals and <strong>Payroll Accrual</strong> is missing 1 of 4. Please post these before month-end close.')">Recurring JEs missing</button>
+        <button onclick="demoChat(this,'Show journals pending approval >48h','<strong>2 journals</strong> have been pending over 48h:<br><br>• Q1 Reclass — Corp (84h, HIGH risk) — 1.2M Dr<br>• FX Revaluation APR (62h, MED risk) — 980K Dr<br><br>These need immediate approval or investigation.')">Pending >48h</button>
+        <button onclick="demoChat(this,'What accounts are unreconciled?','<strong>3 accounts</strong> need attention:<br><br>• <span style=&quot;color:var(--red)&quot;>OVERDUE</span>: Prepaid Expenses (13000) — 920K — assigned M. Singh<br>• IN PROGRESS: Accounts Payable (21000) — 8M — R. Patel<br>• IN PROGRESS: Retained Earnings (31000) — 18.4M — R. Patel<br>• NOT STARTED: Long-Term Debt (23000) — 15M — unassigned')">Unreconciled accounts</button>
+        <button onclick="demoChat(this,'FX exposure by currency','Current FX positions for APR-2026:<br><br><strong>EUR</strong> → +188K gain (Corp Primary)<br><strong>GBP</strong> → +43K gain (Corp Primary)<br><strong>SGD</strong> → -87K loss (APAC Secondary)<br><strong>JPY</strong> → -28K loss (Corp Primary)<br><br>Net unrealised gain: <strong>+116K USD</strong>. EUR exposure is largest — consider hedging if rate moves adversely.')">FX by currency</button>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chat-input" placeholder="Ask about GL balances, journals, FX…" onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()">Ask →</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Hide page loader after brief delay
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const pl = document.getElementById('page-loader');
+    pl.style.opacity = '0';
+    setTimeout(() => pl.style.display = 'none', 400);
+  }, 900);
+});
+
+// Static demo chat
+const DEMO_RESPONSES = {
+  default: "I'm running in demo mode (static data). In production, I query <code>APPS.GL_*</code> tables via the <code>/api/gl/ask</code> endpoint using the <code>ledger_id</code> bind variable. Try one of the quick queries above!"
+};
+
+function demoChat(btn, question, answer) {
+  document.getElementById('quick-qs').style.display = 'none';
+  addMsg('user', question);
+  setTimeout(() => addMsg('ai', answer), 600);
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  document.getElementById('quick-qs').style.display = 'none';
+  addMsg('user', q);
+  const tid = addTyping();
+  setTimeout(() => {
+    const el = document.getElementById(tid);
+    if (el) el.querySelector('.msg-bubble').innerHTML = DEMO_RESPONSES.default;
+    document.getElementById('chat-msgs').scrollTop = 99999;
+  }, 900);
+}
+
+function addMsg(type, html) {
+  const box = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = 'msg ' + type;
+  d.innerHTML = `<div class="msg-lbl"${type === 'user' ? ' style="text-align:right"' : ''}>${type === 'user' ? 'You' : 'GL Assistant'}</div><div class="msg-bubble">${html}</div>`;
+  box.appendChild(d);
+  box.scrollTop = 99999;
+}
+
+function addTyping() {
+  const id = 't' + Date.now();
+  const box = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.id = id; d.className = 'msg ai';
+  d.innerHTML = `<div class="msg-lbl">GL Assistant</div><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  box.appendChild(d);
+  box.scrollTop = 99999;
+  return id;
+}
+</script>
+</body>
+</html>
